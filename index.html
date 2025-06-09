@@ -1,6 +1,7 @@
+//20250609 19시 버전 (수정)
+
 <!DOCTYPE html>
 <html lang="ko">
-
 
 <head>
     <meta charset="UTF-8" />
@@ -115,6 +116,20 @@
             transform: translateY(-1px);
             box-shadow: 0 4px 8px rgba(59, 130, 246, 0.15);
         }
+        
+        /* '최종 결과물 생성' 탭 커스텀 스타일 (녹색 테마) */
+        #tab-final {
+            background-color: #f0fdf4;
+            color: #16a34a;
+        }
+
+        #tab-final:hover:not(.active) {
+            background-color: #dcfce7;
+            color: #15803d;
+            border-color: #86efac;
+        }
+        /* --// '최종 결과물 생성' 탭 커스텀 스타일 */
+
 
         .tab.active::after {
             content: "";
@@ -1284,13 +1299,13 @@
             return html;
         }
 
+        // *** 수정된 부분: 피드백 항목 앞의 숫자 제거 ***
         function extractFeedbackPoints(content, originalLines) {
             const points = content.split(/\n\s*\n+/).filter(p => p.trim());
             let html = '';
             
             points.forEach(point => {
                 const englishQuotes = point.match(/["']([^"']+)["']|`([^`]+)`|\b([A-Za-z][\w\s,.!?;:'"()-]*?[.!?])\b/g);
-                
                 let originalTextFound = '';
                 
                 if (englishQuotes && englishQuotes.length > 0) {
@@ -1306,10 +1321,13 @@
                         if (originalTextFound) break;
                     }
                 }
+
+                // 각 피드백 포인트 시작 부분의 '숫자.' 형식 제거
+                const cleanedPoint = point.trim().replace(/^\d+\.\s*/, '');
                 
                 html += `
                     ${originalTextFound ? `<div class="original-text">${originalTextFound}</div>` : ''}
-                    <div class="feedback-point">${point.replace(/\n/g, '<br>')}</div>
+                    <div class="feedback-point">${cleanedPoint.replace(/\n/g, '<br>')}</div>
                     <hr style="border: 0; height: 1px; background-color: #e2e8f0; margin: 10px 0;">
                 `;
             });
