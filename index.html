@@ -1,3 +1,4 @@
+//20250610 09시 버전 (수정)
 
 <!DOCTYPE html>
 <html lang="ko">
@@ -36,7 +37,6 @@
 
         /* --- 헤더 섹션 --- */
         .header-section {
-            position: relative;
             text-align: center;
             margin-bottom: 2rem;
         }
@@ -48,11 +48,13 @@
             font-weight: 700;
         }
 
+        .reset-btn-container {
+            text-align: left;
+            margin-top: 1rem;
+        }
+
         #reset-btn {
-            position: absolute;
-            top: 0;
-            right: 0;
-            background-color: #ef4444;
+            background-color: #64748b;
             color: #ffffff;
             border: none;
             border-radius: 6px;
@@ -65,7 +67,7 @@
         }
 
         #reset-btn:hover {
-            background-color: #dc2626;
+            background-color: #475569;
         }
 
         /* --- 탭 --- */
@@ -101,13 +103,6 @@
             font-weight: 700;
         }
 
-        .tab.active.final-theme {
-            background-color: #16a34a;
-            color: #ffffff;
-            border: 3px solid #15803d;
-            box-shadow: 0 6px 12px rgba(34, 197, 94, 0.25);
-        }
-
         .tab:hover:not(.active) {
             background-color: #bfdbfe;
             color: #1e40af;
@@ -115,20 +110,26 @@
             transform: translateY(-1px);
             box-shadow: 0 4px 8px rgba(59, 130, 246, 0.15);
         }
-        
+
         /* '최종 결과물 생성' 탭 커스텀 스타일 (녹색 테마) */
         #tab-final {
-            background-color: #f0fdf4;
-            color: #16a34a;
+            background-color: #dcfce7; /* 연한 녹색 배경 */
+            color: #166534;      /* 진한 녹색 글자 */
         }
 
         #tab-final:hover:not(.active) {
-            background-color: #dcfce7;
-            color: #15803d;
-            border-color: #86efac;
+            background-color: #16a34a; /* 진한 녹색 배경 */
+            color: #ffffff;      /* 흰색 글자 */
+            border-color: #15803d;
+        }
+        
+        .tab.active.final-theme {
+            background-color: #16a34a; /* 활성 상태: 진한 녹색 배경 */
+            color: #ffffff;      /* 활성 상태: 흰색 글자 */
+            border: 3px solid #15803d;
+            box-shadow: 0 6px 12px rgba(34, 197, 94, 0.25);
         }
         /* --// '최종 결과물 생성' 탭 커스텀 스타일 */
-
 
         .tab.active::after {
             content: "";
@@ -498,6 +499,11 @@
             border-left: 5px solid #8b5cf6;
         }
 
+        .overview-category > div {
+            padding-left: 1.5em;
+            text-indent: -1.5em;
+        }
+
         .grammar {
             background-color: #fdeded;
             border-left: 5px solid #e74c3c;
@@ -698,15 +704,6 @@
                 font-size: 1.6rem;
                 margin-bottom: 0.3rem;
                 line-height: 1.3;
-                padding-right: 100px;
-            }
-            
-            #reset-btn {
-                position: absolute;
-                top: 0;
-                right: 0;
-                padding: 0.5rem 1rem;
-                font-size: 0.85rem;
             }
             
             .user-info {
@@ -804,12 +801,6 @@
             
             .header-section h1 {
                 font-size: 1.4rem;
-                padding-right: 90px;
-            }
-            
-            #reset-btn {
-                padding: 0.4rem 0.8rem;
-                font-size: 0.8rem;
             }
             
             .tab {
@@ -866,7 +857,7 @@
                 font-size: 14px;
             }
             
-            nav, button, a.button, #reset-btn, .action-icons, .btn-group,
+            nav, button, a.button, .reset-btn-container, .action-icons, .btn-group,
             .print-options-inline, .edit-instruction {
                 display: none !important;
             }
@@ -923,8 +914,8 @@
                 margin: 0.5rem 0;
             }
             
-            img {
-                max-width: 100%;
+            .original-content img {
+                max-width: 70%; /* 이미지 크기 축소 */
                 height: auto;
                 page-break-inside: avoid;
                 margin: 0.5rem 0;
@@ -946,8 +937,11 @@
     <div id="container">
         <div class="header-section">
             <h1>✨ 윤선생 리얼스피치 WriteBack ✨</h1>
+        </div>
+        <div class="reset-btn-container">
             <button id="reset-btn">Reset</button>
         </div>
+
 
         <nav>
             <button id="tab-feedback" class="tab active">피드백 받기</button>
@@ -1210,130 +1204,94 @@
         });
 
         // 피드백 처리 함수
-        function processFeedback(feedback, originalText) {
-            const originalLines = originalText.trim().split(/\n+/);
-            
-            const overviewPattern = /(?:총평|전체\s*평가|종합\s*평가)[\s]*:[\s\S]*?(?=(?:문법\s*오류|어휘\s*개선|표현\s*향상|잘한\s*점)\s*:|$)/i;
-            const grammarPattern = /문법\s*오류\s*:[\s\S]*?(?=(?:총평|전체\s*평가|종합\s*평가|어휘\s*개선|표현\s*향상|잘한\s*점)\s*:|$)/i;
-            const vocabPattern = /어휘\s*개선\s*:[\s\S]*?(?=(?:총평|전체\s*평가|종합\s*평가|문법\s*오류|표현\s*향상|잘한\s*점)\s*:|$)/i;
-            const expressionPattern = /표현\s*향상\s*:[\s\S]*?(?=(?:총평|전체\s*평가|종합\s*평가|문법\s*오류|어휘\s*개선|잘한\s*점)\s*:|$)/i;
-            const strengthsPattern = /잘한\s*점\s*:[\s\S]*?(?=(?:총평|전체\s*평가|종합\s*평가|문법\s*오류|어휘\s*개선|표현\s*향상)\s*:|$)/i;
+        function processFeedback(feedback) {
+            const overviewPattern = /(?:총평|전체\s*평가|종합\s*평가)[\s]*:([\s\S]*?)(?=(?:문법\s*오류|어휘\s*개선|표현\s*향상|잘한\s*점)\s*:|$)/i;
+            const grammarPattern = /문법\s*오류\s*:([\s\S]*?)(?=(?:총평|전체\s*평가|종합\s*평가|어휘\s*개선|표현\s*향상|잘한\s*점)\s*:|$)/i;
+            const vocabPattern = /어휘\s*개선\s*:([\s\S]*?)(?=(?:총평|전체\s*평가|종합\s*평가|문법\s*오류|표현\s*향상|잘한\s*점)\s*:|$)/i;
+            const expressionPattern = /표현\s*향상\s*:([\s\S]*?)(?=(?:총평|전체\s*평가|종합\s*평가|문법\s*오류|어휘\s*개선|잘한\s*점)\s*:|$)/i;
+            const strengthsPattern = /잘한\s*점\s*:([\s\S]*?)(?=(?:총평|전체\s*평가|종합\s*평가|문법\s*오류|어휘\s*개선|표현\s*향상)\s*:|$)/i;
             
             let html = '<div class="feedback-container">';
             
-            const overview = feedback.match(overviewPattern);
-            if (overview && overview[0].trim().length > 0) {
-                const overviewContent = overview[0].replace(/(?:총평|전체\s*평가|종합\s*평가)\s*:/i, '').trim();
-                if (overviewContent) {
-                    html += `
-                        <div class="overview-category">
-                            <h3><i class="fas fa-star"></i> 총평</h3>
-                            <div>${overviewContent.replace(/\n/g, '<br>')}</div>
-                        </div>
-                    `;
+            const extractContent = (pattern) => {
+                const match = feedback.match(pattern);
+                if (match && match[1]) {
+                    // 끝에 붙은 숫자 제거 (예: 2. 제거)
+                    return match[1].trim().replace(/(\r\n|\n|\r|\s)*\d+\.\s*$/, "").trim();
                 }
+                return null;
+            };
+
+            const overviewContent = extractContent(overviewPattern);
+            if (overviewContent) {
+                html += `
+                    <div class="overview-category">
+                        <h3><i class="fas fa-star"></i> 총평</h3>
+                        <div>${overviewContent.replace(/\n/g, '<br>')}</div>
+                    </div>
+                `;
             }
             
-            const grammar = feedback.match(grammarPattern);
-            if (grammar && grammar[0].trim().length > 0) {
-                const grammarContent = grammar[0].replace(/문법\s*오류\s*:/i, '').trim();
-                if (grammarContent) {
-                    const grammarPoints = extractFeedbackPoints(grammarContent, originalLines);
-                    
-                    html += `
-                        <div class="feedback-category grammar">
-                            <h3><i class="fas fa-exclamation-circle"></i> 문법 오류</h3>
-                            ${grammarPoints}
-                        </div>
-                    `;
-                }
+            const grammarContent = extractContent(grammarPattern);
+            if (grammarContent) {
+                html += `
+                    <div class="feedback-category grammar">
+                        <h3><i class="fas fa-exclamation-circle"></i> 문법 오류</h3>
+                        ${extractFeedbackPoints(grammarContent)}
+                    </div>
+                `;
             }
             
-            const vocab = feedback.match(vocabPattern);
-            if (vocab && vocab[0].trim().length > 0) {
-                const vocabContent = vocab[0].replace(/어휘\s*개선\s*:/i, '').trim();
-                if (vocabContent) {
-                    const vocabPoints = extractFeedbackPoints(vocabContent, originalLines);
-                    
-                    html += `
-                        <div class="feedback-category vocabulary">
-                            <h3><i class="fas fa-book"></i> 어휘 개선</h3>
-                            ${vocabPoints}
-                        </div>
-                    `;
-                }
+            const vocabContent = extractContent(vocabPattern);
+            if (vocabContent) {
+                html += `
+                    <div class="feedback-category vocabulary">
+                        <h3><i class="fas fa-book"></i> 어휘 개선</h3>
+                        ${extractFeedbackPoints(vocabContent)}
+                    </div>
+                `;
             }
             
-            const expression = feedback.match(expressionPattern);
-            if (expression && expression[0].trim().length > 0) {
-                const expressionContent = expression[0].replace(/표현\s*향상\s*:/i, '').trim();
-                if (expressionContent) {
-                    const expressionPoints = extractFeedbackPoints(expressionContent, originalLines);
-                    
-                    html += `
-                        <div class="feedback-category expression">
-                            <h3><i class="fas fa-pencil-alt"></i> 표현 향상</h3>
-                            ${expressionPoints}
-                        </div>
-                    `;
-                }
+            const expressionContent = extractContent(expressionPattern);
+            if (expressionContent) {
+                html += `
+                    <div class="feedback-category expression">
+                        <h3><i class="fas fa-pencil-alt"></i> 표현 향상</h3>
+                        ${extractFeedbackPoints(expressionContent)}
+                    </div>
+                `;
             }
             
-            const strengths = feedback.match(strengthsPattern);
-            if (strengths && strengths[0].trim().length > 0) {
-                const strengthsContent = strengths[0].replace(/잘한\s*점\s*:/i, '').trim();
-                if (strengthsContent) {
-                    const strengthsPoints = extractFeedbackPoints(strengthsContent, originalLines);
-                    
-                    html += `
-                        <div class="feedback-category strengths">
-                            <h3><i class="fas fa-thumbs-up"></i> 잘한 점</h3>
-                            ${strengthsPoints}
-                        </div>
-                    `;
-                }
+            const strengthsContent = extractContent(strengthsPattern);
+            if (strengthsContent) {
+                html += `
+                    <div class="feedback-category strengths">
+                        <h3><i class="fas fa-thumbs-up"></i> 잘한 점</h3>
+                        ${extractFeedbackPoints(strengthsContent)}
+                    </div>
+                `;
             }
             
             html += '</div>';
             return html;
         }
 
-        // *** 수정된 부분: 피드백 항목 앞의 숫자 제거 ***
-        function extractFeedbackPoints(content, originalLines) {
+        function extractFeedbackPoints(content) {
+            // 원문 표시 로직 제거, 피드백만 출력
             const points = content.split(/\n\s*\n+/).filter(p => p.trim());
             let html = '';
             
             points.forEach(point => {
-                const englishQuotes = point.match(/["']([^"']+)["']|`([^`]+)`|\b([A-Za-z][\w\s,.!?;:'"()-]*?[.!?])\b/g);
-                let originalTextFound = '';
-                
-                if (englishQuotes && englishQuotes.length > 0) {
-                    const cleanQuotes = englishQuotes.map(q => q.replace(/^["'`]|["'`]$/g, '').trim());
-                    
-                    for (const line of originalLines) {
-                        for (const quote of cleanQuotes) {
-                            if (quote.length > 3 && line.includes(quote)) {
-                                originalTextFound = line.trim();
-                                break;
-                            }
-                        }
-                        if (originalTextFound) break;
-                    }
-                }
-
-                // 각 피드백 포인트 시작 부분의 '숫자.' 형식 제거
                 const cleanedPoint = point.trim().replace(/^\d+\.\s*/, '');
-                
-                html += `
-                    ${originalTextFound ? `<div class="original-text">${originalTextFound}</div>` : ''}
-                    <div class="feedback-point">${cleanedPoint.replace(/\n/g, '<br>')}</div>
-                    <hr style="border: 0; height: 1px; background-color: #e2e8f0; margin: 10px 0;">
-                `;
+                if (cleanedPoint) {
+                    html += `
+                        <div class="feedback-point">${cleanedPoint.replace(/\n/g, '<br>')}</div>
+                        <hr style="border: 0; height: 1px; background-color: #e2e8f0; margin: 10px 0;">
+                    `;
+                }
             });
             
-            html = html.replace(/<hr[^>]*>$/i, '');
-            
-            return html;
+            return html.replace(/<hr[^>]*>$/i, '');
         }
 
         // 인쇄용 이미지 회전 함수
@@ -1521,7 +1479,7 @@
         }
         
         .original-content img {
-            max-width: 100%;
+            max-width: 70%;
             height: auto;
             border: 1px solid #ccc;
             border-radius: 2px;
@@ -1630,7 +1588,7 @@
                 const { feedback, modelAnswer } = await res.json();
                 const container = document.getElementById('feedback-result');
                 
-                const formattedFeedback = processFeedback(feedback, contentText);
+                const formattedFeedback = processFeedback(feedback);
                 
                 container.innerHTML = `
   <p style="text-align: left;">
