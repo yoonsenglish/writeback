@@ -938,7 +938,7 @@
     <div id="container">
         <div class="header-section">
             <h1>✨ 윤선생 리얼스피치 WriteBack ✨</h1>
-           </div>
+        </div>
         <div class="reset-btn-container">
             <button id="reset-btn">Reset</button>
         </div>
@@ -1034,236 +1034,74 @@
             }
         }
 
-        // 텍스트 정리 함수 (개선됨)
+        // 텍스트 정리 함수
         function cleanExtractedText(text) {
             if (!text || typeof text !== 'string') {
                 return '';
             }
             
-            // 기본 정리
             text = text.replace(/[ \t]+/g, ' ');
             text = text.replace(/\n{3,}/g, '\n\n');
             text = text.split('\n').map(line => line.trim()).join('\n');
             text = text.replace(/(\n\s*){3,}/g, '\n\n');
-            
-            // 구두점 정리
             text = text.replace(/\.\s{2,}/g, '. ');
             text = text.replace(/\?\s{2,}/g, '? ');
             text = text.replace(/!\s{2,}/g, '! ');
             text = text.replace(/,\s{2,}/g, ', ');
             
-            // OCR 특유의 오류 패턴 수정
-            text = text.replace(/([a-z])([A-Z])/g, '$1 $2'); // 단어 분리
-            text = text.replace(/([.!?])([A-Z])/g, '$1 $2'); // 문장 분리
-            text = text.replace(/\b(\w)\s+\1\b/g, '$1'); // 중복 문자 제거
-            
             return text.trim();
         }
 
-        // 향상된 이미지 전처리 함수
-        async function enhancedPreprocessImage(canvas, ctx) {
+        // 이미지 전처리 함수
+        function preprocessImage(canvas, ctx) {
             const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
             const data = imageData.data;
             
-            // 이미지 품질 향상을 위한 파라미터
-            const contrast = 1.3;
-            const brightness = 15;
-            const gamma = 1.1;
+            const contrast = 1.2;
+            const brightness = 10;
             
-            // 픽셀별 처리
             for (let i = 0; i < data.length; i += 4) {
-                // RGB 값 가져오기
-                let r = data[i];
-                let g = data[i + 1];
-                let b = data[i + 2];
-                
-                // 밝기 및 대비 조정
-                r = Math.min(255, Math.max(0, (r - 128) * contrast + 128 + brightness));
-                g = Math.min(255, Math.max(0, (g - 128) * contrast + 128 + brightness));
-                b = Math.min(255, Math.max(0, (b - 128) * contrast + 128 + brightness));
-                
-                // 감마 보정
-                r = Math.pow(r / 255, 1 / gamma) * 255;
-                g = Math.pow(g / 255, 1 / gamma) * 255;
-                b = Math.pow(b / 255, 1 / gamma) * 255;
-                
-                // 샤프닝 효과 (선택적으로 적용)
-                const gray = (r * 0.299 + g * 0.587 + b * 0.114);
-                if (gray < 128) {
-                    // 어두운 부분은 더 어둡게
-                    r = Math.max(0, r - 10);
-                    g = Math.max(0, g - 10);
-                    b = Math.max(0, b - 10);
-                } else {
-                    // 밝은 부분은 더 밝게
-                    r = Math.min(255, r + 10);
-                    g = Math.min(255, g + 10);
-                    b = Math.min(255, b + 10);
-                }
-                
-                // 값 적용
-                data[i] = r;
-                data[i + 1] = g;
-                data[i + 2] = b;
+                data[i] = Math.min(255, Math.max(0, contrast * (data[i] - 128) + 128 + brightness));
+                data[i + 1] = Math.min(255, Math.max(0, contrast * (data[i + 1] - 128) + 128 + brightness));
+                data[i + 2] = Math.min(255, Math.max(0, contrast * (data[i + 2] - 128) + 128 + brightness));
             }
             
-            // 처리된 이미지 데이터 적용
             ctx.putImageData(imageData, 0, 0);
         }
 
-        // 기존 preprocessImage 함수도 유지 (호환성을 위해)
-        function preprocessImage(canvas, ctx) {
-            enhancedPreprocessImage(canvas, ctx);
-        }
-
-        // 재시도 로직을 포함한 API 호출 함수
-        async function retryApiCall(requestBody, maxRetries = 3) {
-            let lastError;
-            
-            for (let attempt = 1; attempt <= maxRetries; attempt++) {
-                try {
-                    // 재시도 시 약간의 지연 추가
-                    if (attempt > 1) {
-                        await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
-                    }
-                    
-                    // 타임아웃 설정으로 fetch 호출
-                    const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30초 타임아웃
-                    
-                    const resp = await fetch(PROXY_URL, {
-                        method: 'POST',
-                        headers: { 
-                            'Content-Type': 'application/json',
-                            'User-Agent': 'OCR-Client/1.0'
-                        },
-                        body: JSON.stringify(requestBody),
-                        signal: controller.signal
-                    });
-                    
-                    clearTimeout(timeoutId);
-                    
-                    // 응답 상태 확인
-                    if (!resp.ok) {
-                        if (resp.status === 429) {
-                            throw new Error(`API 오류: ${resp.status} - 너무 많은 요청입니다. 잠시 후 다시 시도해주세요.`);
-                        } else if (resp.status === 500) {
-                            throw new Error(`API 오류: ${resp.status} - 서버 내부 오류입니다.`);
-                        } else if (resp.status === 503) {
-                            throw new Error(`API 오류: ${resp.status} - 서비스를 사용할 수 없습니다.`);
-                        } else {
-                            throw new Error(`API 오류: ${resp.status} ${resp.statusText}`);
-                        }
-                    }
-                    
-                    // 응답 데이터 파싱
-                    const data = await resp.json();
-                    
-                    // 응답 데이터 검증
-                    if (!data || !data.choices || !Array.isArray(data.choices) || data.choices.length === 0) {
-                        throw new Error('API 응답 형식이 올바르지 않습니다.');
-                    }
-                    
-                    const extractedText = data.choices[0]?.message?.content?.trim();
-                    
-                    if (!extractedText) {
-                        throw new Error('텍스트 추출 결과가 비어있습니다.');
-                    }
-                    
-                    return extractedText;
-                    
-                } catch (error) {
-                    lastError = error;
-                    
-                    // AbortError는 타임아웃을 의미
-                    if (error.name === 'AbortError') {
-                        lastError = new Error('요청 시간이 초과되었습니다.');
-                    }
-                    
-                    // 재시도하지 않을 오류들
-                    if (error.message.includes('파일') || 
-                        error.message.includes('이미지') || 
-                        error.message.includes('형식') ||
-                        error.message.includes('크기')) {
-                        throw error;
-                    }
-                    
-                    console.warn(`API 호출 시도 ${attempt}/${maxRetries} 실패:`, error.message);
-                    
-                    // 마지막 시도가 아니면 계속 진행
-                    if (attempt < maxRetries) {
-                        continue;
-                    }
-                }
-            }
-            
-            // 모든 재시도 실패
-            throw new Error(`${maxRetries}번의 시도 후에도 실패했습니다. 마지막 오류: ${lastError.message}`);
-        }
-
-        // 개선된 OCR 함수 - 더 나은 오류 처리, 재시도 로직, 타임아웃 설정 포함
+        // 개선된 OCR 함수
         async function doOCR(file, section) {
             const status = document.getElementById(`ocr-status-${section}`);
             const textArea = document.getElementById(`contentText-${section}`);
             
-            // 상태 표시 시작
             status.classList.add('show');
-            status.textContent = '이미지에서 텍스트를 추출 중입니다...';
             
             try {
-                // 파일 크기 검증 (더 엄격한 검증)
                 if (file.size > 10 * 1024 * 1024) {
                     throw new Error('파일 크기가 너무 큽니다. 10MB 이하의 이미지를 사용해주세요.');
                 }
                 
-                if (file.size < 1024) {
-                    throw new Error('파일 크기가 너무 작습니다. 유효한 이미지 파일을 선택해주세요.');
+                if (!file.type.startsWith('image/')) {
+                    throw new Error('이미지 파일만 업로드 가능합니다.');
                 }
                 
-                // 파일 타입 검증 (더 구체적인 검증)
-                const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/bmp'];
-                if (!allowedTypes.includes(file.type.toLowerCase())) {
-                    throw new Error('지원하지 않는 파일 형식입니다. JPEG, PNG, WebP, BMP 파일만 업로드 가능합니다.');
-                }
-                
-                // 이미지 로드 및 전처리 (타임아웃 추가)
                 const img = new Image();
                 const canvas = document.createElement('canvas');
                 const ctx = canvas.getContext('2d');
                 
-                // 이미지 로드 타임아웃 설정
-                await Promise.race([
-                    new Promise((resolve, reject) => {
-                        img.onload = resolve;
-                        img.onerror = () => reject(new Error('이미지 파일이 손상되었거나 읽을 수 없습니다.'));
-                        img.src = URL.createObjectURL(file);
-                    }),
-                    new Promise((_, reject) => 
-                        setTimeout(() => reject(new Error('이미지 로드 시간이 초과되었습니다.')), 10000)
-                    )
-                ]);
+                await new Promise((resolve) => {
+                    img.onload = resolve;
+                    img.src = URL.createObjectURL(file);
+                });
                 
-                // 이미지 크기 검증
-                if (img.width < 50 || img.height < 50) {
-                    throw new Error('이미지 크기가 너무 작습니다. 최소 50x50 픽셀 이상의 이미지를 사용해주세요.');
-                }
-                
-                if (img.width > 4000 || img.height > 4000) {
-                    throw new Error('이미지 크기가 너무 큽니다. 최대 4000x4000 픽셀 이하의 이미지를 사용해주세요.');
-                }
-                
-                // 캔버스 설정 및 이미지 그리기
                 canvas.width = img.width;
                 canvas.height = img.height;
                 ctx.drawImage(img, 0, 0);
                 
-                // 이미지 전처리 (향상된 전처리)
-                await enhancedPreprocessImage(canvas, ctx);
+                preprocessImage(canvas, ctx);
                 
-                // 압축된 이미지 데이터 URL 생성
-                const processedDataUrl = canvas.toDataURL('image/jpeg', 0.9);
+                const processedDataUrl = canvas.toDataURL('image/jpeg', 0.95);
                 
-                // API 요청 본문 준비
                 const requestBody = {
                     model: 'gpt-4o-mini',
                     messages: [{
@@ -1275,63 +1113,41 @@
 2. 줄바꿈과 문단 구조를 최대한 유지합니다.
 3. 오타나 추측은 최소화하고 보이는 그대로 정확히 입력합니다.
 4. 추가적인 설명이나 코멘트 없이 추출된 텍스트만 반환합니다.
-5. 불명확한 글자는 문맥상 가장 유사한 영어 단어로 추정하여 입력합니다.
-6. 만약 텍스트를 찾을 수 없다면 "NO_TEXT_FOUND"라고 반환합니다.`
+5. 불명확한 글자는 문맥상 가장 유사한 영어 단어로 추정하여 입력합니다.`
                         }, {
                             type: 'image_url',
                             image_url: { url: processedDataUrl }
                         }]
                     }],
-                    max_tokens: 2000,
+                    max_tokens: 1500,
                     temperature: 0.1
                 };
                 
-                // 재시도 로직으로 API 호출
-                const extractedText = await retryApiCall(requestBody, 3);
+                const resp = await fetch(PROXY_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestBody)
+                });
                 
-                // 결과 처리
-                if (extractedText && extractedText !== 'NO_TEXT_FOUND') {
+                if (!resp.ok) {
+                    throw new Error(`API 오류: ${resp.status} ${resp.statusText}`);
+                }
+                
+                const data = await resp.json();
+                const extractedText = data.choices?.[0]?.message?.content?.trim() || '';
+                
+                if (extractedText) {
                     const cleanedText = cleanExtractedText(extractedText);
-                    if (cleanedText.length > 0) {
-                        textArea.value = cleanedText;
-                        status.textContent = '텍스트 추출이 완료되었습니다.';
-                    } else {
-                        textArea.value = '텍스트를 인식할 수 없습니다. 이미지가 선명한지 확인하고 다시 시도해주세요.';
-                        status.textContent = '텍스트를 찾을 수 없습니다.';
-                    }
+                    textArea.value = cleanedText;
                 } else {
                     textArea.value = '텍스트를 인식할 수 없습니다. 이미지가 선명한지 확인하고 다시 시도해주세요.';
-                    status.textContent = '텍스트를 찾을 수 없습니다.';
                 }
                 
             } catch (error) {
                 console.error('OCR 오류:', error);
-                
-                // 사용자 친화적인 오류 메시지
-                let userMessage = 'OCR 처리 중 오류가 발생했습니다.';
-                
-                if (error.message.includes('Network')) {
-                    userMessage = '네트워크 연결을 확인하고 다시 시도해주세요.';
-                } else if (error.message.includes('timeout') || error.message.includes('초과')) {
-                    userMessage = '처리 시간이 초과되었습니다. 이미지 크기를 줄이거나 다시 시도해주세요.';
-                } else if (error.message.includes('API 오류: 500')) {
-                    userMessage = '서버에 일시적인 문제가 발생했습니다. 잠시 후 다시 시도해주세요.';
-                } else if (error.message.includes('API 오류: 429')) {
-                    userMessage = '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.';
-                } else if (error.message.includes('크기') || error.message.includes('형식')) {
-                    userMessage = error.message;
-                } else {
-                    userMessage = `오류: ${error.message}`;
-                }
-                
-                textArea.value = userMessage;
-                status.textContent = '오류가 발생했습니다.';
-                
+                textArea.value = `OCR 처리 중 오류가 발생했습니다: ${error.message}. 다시 시도해주세요.`;
             } finally {
-                // 3초 후 상태 메시지 숨기기
-                setTimeout(() => {
-                    status.classList.remove('show');
-                }, 3000);
+                status.classList.remove('show');
             }
         }
 
@@ -1364,7 +1180,7 @@
             document.getElementById('tab-feedback').classList.remove('active');
         });
 
-        // File upload & OCR (개선된 버전)
+        // File upload & OCR
         ['feedback', 'final'].forEach(section => {
             ['camera', 'gallery'].forEach(src => {
                 document.getElementById(`contentFile-${src}-${section}`).addEventListener('change', async e => {
@@ -1683,7 +1499,7 @@
 </head>
 <body>
     <div class="print-header">
-        <h1 class="title">윤선생 리얼스피치 2025 (OCR 개선버전)</h1>
+        <h1 class="title">윤선생 리얼스피치 2025</h1>
     </div>
     
     ${userInfoHTML}
