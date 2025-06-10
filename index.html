@@ -1379,6 +1379,7 @@
             background-color: #f8fafc;
             border-radius: 4px;
             font-size: 12px;
+            text-align: right;
         }
         
         h1, h2 {
@@ -1499,12 +1500,12 @@
 </head>
 <body>
     <div class="print-header">
-        <h1 class="title">윤선생 리얼스피치 2025</h1>
+      <h1 class="title" style="font-size: 20px;">🎉윤선생 리얼스피치 2025🎉</h1>
     </div>
     
     ${userInfoHTML}
     
-    <h2>${type === 'feedback' ? '피드백 결과' : '최종 결과'}</h2>`;
+    <h2>${type === 'feedback' ? '❇️피드백 원고' : '❇️최종 원고'}</h2>`;
 
             if (orig) {
                 html += '<h3>원본</h3><div class="original-content">';
@@ -1592,7 +1593,7 @@
                 const formattedFeedback = processFeedback(feedback);
                 
                 container.innerHTML = `
-  <p style="text-align: left;">
+<p style="text-align: left; color: red;">
     📢 AI는 실수를 할 수 있습니다. 꼭 생성된 내용을 확인 후 필요한 부분은 수정하셔서 이용해주세요~!
   </p>
   <div class="box" id="fb-box">
@@ -1719,7 +1720,7 @@
         const { feedback, modelAnswer } = await res.json();
         const cont = document.getElementById('final-result');
         cont.innerHTML = `
-  <p style="text-align: left;">
+ <p style="text-align: left; color: red;">
     📢 AI는 실수를 할 수 있습니다. 꼭 생성된 내용을 확인 후 필요한 부분은 수정하셔서 이용해주세요~!
   </p>
   <div class="corrected-section" id="fn-box">
