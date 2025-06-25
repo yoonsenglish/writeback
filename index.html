@@ -110,16 +110,14 @@
         }
 
         /* '최종 결과물 생성' 탭 커스텀 스타일 (녹색 테마) 강제 오버라이드 */
-
-        /* '최종 결과물 생성' 탭 커스텀 스타일 (녹색 테마) 강제 오버라이드 */
         #tab-final {
-            background-color: #16a34a !important; /* 진한 녹색 배경 */
+            background-color: #16a34a !important; /* 연한 녹색 배경 */
             color: #f5f7f6 !important;            /* 녹색 텍스트 */
             border: 2px solid transparent !important;
         }
 
         #tab-final:hover:not(.active) {
-            background-color: #07c911 !important; /* 연한 녹색 배경 */
+            background-color: #07c911 !important; /* 진한 녹색 배경 */
             color: #ffffff !important;            /* 흰색 텍스트 */
             border-color: #15803d !important;
         }
@@ -500,10 +498,10 @@
             border-left: 5px solid #8b5cf6;
         }
 
-     .overview-category > div {
-            padding-left: 2em;
-            text-indent: 0;
-        } 
+        .overview-category > div {
+            padding-left: 1.5em;
+            text-indent: -1.5em;
+        }
 
         .grammar {
             background-color: #fdeded;
@@ -927,6 +925,38 @@
             }
         }
 
+        /* --- 개선 제안 버튼 컨테이너 (새로 추가) --- */
+.suggestion-btn-container {
+    margin-top: 1rem; /* 제목과의 간격 */
+    margin-bottom: -1rem; /* 리셋 버튼과의 간격 조절 */
+}
+
+/* --- 개선 제안 버튼 스타일 --- */
+.suggestion-btn {
+    background-color: transparent;
+    color: #64748b;
+    padding: 0.3rem 0.6rem;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.85rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    transition: all 0.2s ease-in-out;
+    border: 1px solid #e2e8f0;
+}
+
+.suggestion-btn:hover {
+    background-color: #f1f5f9;
+    color: #1e293b;
+    transform: translateY(-1px);
+}
+
+.suggestion-btn .fa-lightbulb {
+    color: #f33d06;
+}
+
         /* 웹 화면에서는 인쇄 관련 요소 숨김 */
         .print-header, .user-info-print {
             display: none;
@@ -939,6 +969,14 @@
         <div class="header-section">
             <h1>✨ 윤선생 리얼스피치 WriteBack ✨</h1>
         </div>
+
+       <div class="suggestion-btn-container">
+            <a href="https://forms.gle/Ju8wWBRKwpiTYppf8" target="_blank" rel="noopener noreferrer" class="suggestion-btn">
+                <i class="fas fa-lightbulb"></i> 개선 제안
+            </a>
+        </div>
+
+
         <div class="reset-btn-container">
             <button id="reset-btn">Reset</button>
         </div>
@@ -954,7 +992,7 @@
                 <label for="contentText-feedback"> 📪영작한 내용을 입력하거나 찍어서 업로드해 주세요.</label>
                 <div class="user-info">
                     <input type="text" id="user-name-feedback" placeholder="이름" />
-                    <input type="text" id="user-school-feedback" placeholder="학교" />
+                    <input type="text" id="user-school-feedback" placeholder="학교(학년)" />
                 </div>
                 <div class="action-icons">
                     <div class="icon-btn-container">
@@ -1379,7 +1417,6 @@
             background-color: #f8fafc;
             border-radius: 4px;
             font-size: 12px;
-            text-align: right;
         }
         
         h1, h2 {
@@ -1500,12 +1537,12 @@
 </head>
 <body>
     <div class="print-header">
-      <h1 class="title" style="font-size: 20px;">🎉윤선생 리얼스피치 2025🎉</h1>
+        <h1 class="title">윤선생 리얼스피치 2025</h1>
     </div>
     
     ${userInfoHTML}
     
-    <h2>${type === 'feedback' ? '❇️피드백 원고' : '❇️최종 원고'}</h2>`;
+    <h2>${type === 'feedback' ? '피드백 결과' : '최종 결과'}</h2>`;
 
             if (orig) {
                 html += '<h3>원본</h3><div class="original-content">';
@@ -1593,7 +1630,7 @@
                 const formattedFeedback = processFeedback(feedback);
                 
                 container.innerHTML = `
-<p style="text-align: left; color: red;">
+  <p style="text-align: left;">
     📢 AI는 실수를 할 수 있습니다. 꼭 생성된 내용을 확인 후 필요한 부분은 수정하셔서 이용해주세요~!
   </p>
   <div class="box" id="fb-box">
@@ -1720,7 +1757,7 @@
         const { feedback, modelAnswer } = await res.json();
         const cont = document.getElementById('final-result');
         cont.innerHTML = `
- <p style="text-align: left; color: red;">
+  <p style="text-align: left;">
     📢 AI는 실수를 할 수 있습니다. 꼭 생성된 내용을 확인 후 필요한 부분은 수정하셔서 이용해주세요~!
   </p>
   <div class="corrected-section" id="fn-box">
