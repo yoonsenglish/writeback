@@ -1334,116 +1334,341 @@
             return html.replace(/<hr[^>]*>$/i, '');
         }
 
-      // 통합 인쇄 HTML 생성 및 인쇄 함수 (최종 안정화 버전)
-        function generateAndPrintHTML(imageUrl, orig, fbCheck, corr, name, school, type) {
-            const fileName = generatePDFFileName(name);
-            
-            // --- 기존 HTML 생성 로직은 그대로 유지 ---
-            let userInfoHTML = '';
-            if (name?.trim() || school?.trim()) {
-                userInfoHTML = `<div class="user-info-print">`;
-                if (name?.trim()) userInfoHTML += `<strong>이름:</strong> ${name.trim()}`;
-                if (name?.trim() && school?.trim()) userInfoHTML += ` &nbsp;&nbsp; `;
-                if (school?.trim()) userInfoHTML += `<strong>학교:</strong> ${school.trim()}`;
-                userInfoHTML += `</div>`;
-            }
-            
-            let html = `<!doctype html>
+   // iframe을 사용한 인쇄 함수
+function generateAndPrintHTMLWithIframe(imageUrl, orig, fbCheck, corr, name, school, type) {
+    const fileName = generatePDFFileName(name);
+    
+    let userInfoHTML = '';
+    if (name?.trim() || school?.trim()) {
+        userInfoHTML = `<div class="user-info-print">`;
+        if (name?.trim()) userInfoHTML += `<strong>이름:</strong> ${name.trim()}`;
+        if (name?.trim() && school?.trim()) userInfoHTML += ` &nbsp;&nbsp; `;
+        if (school?.trim()) userInfoHTML += `<strong>학교:</strong> ${school.trim()}`;
+        userInfoHTML += `</div>`;
+    }
+    
+    let html = `<!doctype html>
 <html>
 <head>
     <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${fileName}</title>
     <style>
-        /* 이 스타일은 새 창에만 적용됩니다 */
-        @page { margin: 15mm; size: A4; }
-        body { margin: 1rem; padding: 0; font-family: 'Segoe UI', 'Malgun Gothic', sans-serif; background: white; color: black; line-height: 1.4; font-size: 13px; }
-        .print-header { text-align: center; padding: 10px 0; border-bottom: 2px solid #1e3a8a; margin-bottom: 12px; page-break-inside: avoid; }
-        .print-header .title { font-size: 22px; font-weight: bold; color: #1e3a8a; margin: 0; text-align: center; }
-        .user-info-print { margin-bottom: 12px; padding: 6px 8px; background-color: #f8fafc; border-radius: 4px; font-size: 12px; }
-        h1, h2 { color: #1e3a8a; page-break-after: avoid; margin-top: 0.8rem; margin-bottom: 0.4rem; font-size: 16px; }
-        h3 { margin-top: 0.6rem; margin-bottom: 0.3rem; page-break-after: avoid; font-size: 14px; }
-        .feedback-category, .overview-category, .corrected-section { page-break-inside: avoid; margin-bottom: 0.6rem; padding: 6px 10px; border-radius: 4px; }
-        .overview-category { background-color: #f5f3ff; border-left: 4px solid #8b5cf6; }
-        .grammar { background-color: #fdeded; border-left: 4px solid #e74c3c; }
-        .vocabulary { background-color: #ebf5fb; border-left: 4px solid #3498db; }
-        .expression { background-color: #f4ecf7; border-left: 4px solid #9b59b6; }
-        .strengths { background-color: #ebfaf0; border-left: 4px solid #2ecc71; }
-        .corrected-section { background-color: #ecfdf5; border-left: 4px solid #10b981; }
-        .original-text { background-color: rgba(248, 250, 252, 0.8); border-left: 2px solid #94a3b8; padding: 4px 8px; margin: 0.3rem 0; font-style: italic; color: #475569; border-radius: 2px; font-size: 11px; }
-        .original-text::before { content: '원문'; display: block; font-weight: 600; font-style: normal; font-size: 9px; margin-bottom: 2px; color: #64748b; }
-        hr { margin: 0.2rem 0; border: 0; height: 1px; background-color: #e2e8f0; }
-        .corrected-content, .model-box { background-color: #ffffff; font-size: 12px; line-height: 1.6; border: 1px solid #d1d5db; padding: 8px; border-radius: 4px; margin: 0.3rem 0; }
-        .original-content { margin: 0.5rem 0; padding: 6px 8px; border: 1px solid #ddd; border-radius: 4px; background-color: #f8fafc; }
-        .original-content img { max-width: 100%; height: auto; border: 1px solid #ccc; border-radius: 2px; margin: 0.2rem 0; }
-        p, div { margin-top: 0.2rem; margin-bottom: 0.2rem; }
-        .feedback-point { margin: 0.2rem 0; }
+        @page {
+            margin: 15mm;
+            size: A4;
+        }
+        
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', 'Malgun Gothic', sans-serif;
+            background: white;
+            color: black;
+            line-height: 1.4;
+            font-size: 13px;
+        }
+        
+        .print-header {
+            text-align: center;
+            padding: 10px 0;
+            border-bottom: 2px solid #1e3a8a;
+            margin-bottom: 12px;
+            page-break-inside: avoid;
+        }
+        
+        .print-header .title {
+            font-size: 22px;
+            font-weight: bold;
+            color: #1e3a8a;
+            margin: 0;
+        }
+        
+        .user-info-print {
+            margin-bottom: 12px;
+            padding: 6px 8px;
+            background-color: #f8fafc;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        
+        h1, h2 {
+            color: #1e3a8a;
+            page-break-after: avoid;
+            margin-top: 0.8rem;
+            margin-bottom: 0.4rem;
+            font-size: 16px;
+        }
+        
+        h3 {
+            margin-top: 0.6rem;
+            margin-bottom: 0.3rem;
+            page-break-after: avoid;
+            font-size: 14px;
+        }
+        
+        .feedback-category, .overview-category, .corrected-section {
+            page-break-inside: avoid;
+            margin-bottom: 0.6rem;
+            padding: 6px 10px;
+            border-radius: 4px;
+        }
+        
+        .overview-category {
+            background-color: #f5f3ff;
+            border-left: 4px solid #8b5cf6;
+        }
+        
+        .grammar {
+            background-color: #fdeded;
+            border-left: 4px solid #e74c3c;
+        }
+        
+        .vocabulary {
+            background-color: #ebf5fb;
+            border-left: 4px solid #3498db;
+        }
+        
+        .expression {
+            background-color: #f4ecf7;
+            border-left: 4px solid #9b59b6;
+        }
+        
+        .strengths {
+            background-color: #ebfaf0;
+            border-left: 4px solid #2ecc71;
+        }
+        
+        .corrected-section {
+            background-color: #ecfdf5;
+            border-left: 4px solid #10b981;
+        }
+        
+        .original-text {
+            background-color: rgba(248, 250, 252, 0.8);
+            border-left: 2px solid #94a3b8;
+            padding: 4px 8px;
+            margin: 0.3rem 0;
+            font-style: italic;
+            color: #475569;
+            border-radius: 2px;
+            font-size: 11px;
+        }
+        
+        .original-text::before {
+            content: '원문';
+            display: block;
+            font-weight: 600;
+            font-style: normal;
+            font-size: 9px;
+            margin-bottom: 2px;
+            color: #64748b;
+        }
+        
+        hr {
+            margin: 0.2rem 0;
+            border: 0;
+            height: 1px;
+            background-color: #e2e8f0;
+        }
+        
+        .corrected-content, .model-box {
+            background-color: #ffffff;
+            font-size: 12px;
+            line-height: 1.6;
+            border: 1px solid #d1d5db;
+            padding: 8px;
+            border-radius: 4px;
+            margin: 0.3rem 0;
+        }
+        
+        .original-content {
+            margin: 0.5rem 0;
+            padding: 6px 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #f8fafc;
+        }
+        
+        .original-content img {
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #ccc;
+            border-radius: 2px;
+            margin: 0.2rem 0;
+        }
+        
+        p, div {
+            margin-top: 0.2rem;
+            margin-bottom: 0.2rem;
+        }
+        
+        .feedback-point {
+            margin: 0.2rem 0;
+        }
+        
+        /* 모바일 최적화 */
+        @media screen and (max-width: 768px) {
+            body {
+                font-size: 12px;
+            }
+            
+            .print-header .title {
+                font-size: 20px;
+            }
+            
+            h1, h2 {
+                font-size: 15px;
+            }
+            
+            h3 {
+                font-size: 13px;
+            }
+        }
+        
+        /* 인쇄 시 모바일 최적화 */
+        @media print {
+            body {
+                font-size: 11px;
+            }
+            
+            .original-content img {
+                max-width: 80%;
+                page-break-inside: avoid;
+            }
+        }
     </style>
 </head>
 <body>
-    <div class="print-header"><h1 class="title">윤선생 리얼스피치 2025</h1></div>
+    <div class="print-header">
+        <h1 class="title">윤선생 리얼스피치 2025</h1>
+    </div>
+    
     ${userInfoHTML}
+    
     <h2>${type === 'feedback' ? '피드백 결과' : '최종 결과'}</h2>`;
 
-            if (orig) {
-                html += '<h3>원본</h3><div class="original-content">';
-                if (imageUrl) {
-                    html += `<img src="${imageUrl}" alt="원본 이미지" />`;
-                } else {
-                    const textContent = type === 'feedback' ?
-                        document.getElementById('contentText-feedback').value :
-                        document.getElementById('contentText-final').value;
-                    html += `<div style="white-space: pre-wrap;">${textContent || '내용 없음'}</div>`;
-                }
-                html += '</div>';
-            }
-
-            if (fbCheck && type === 'feedback') {
-                const feedbackContent = document.getElementById('fb-content');
-                if (feedbackContent) {
-                    html += '<h3>피드백</h3>' + feedbackContent.outerHTML;
-                }
-            }
-
-            if (corr) {
-                const correctedElement = type === 'feedback' ?
-                    document.getElementById('fb-corrected') :
-                    document.getElementById('fn-corrected');
-
-                if (correctedElement) {
-                    html += '<h3>수정글</h3>';
-                    html += `<div class="corrected-section">`;
-                    html += `<div class="corrected-content">${correctedElement.innerHTML}</div>`;
-                    html += '</div>';
-                }
-            }
-            html += `</body></html>`;
-
-            // --- 여기가 핵심 수정 부분입니다 ---
-
-            // 1. 인쇄 전용 새 창을 엽니다.
-            const printWindow = window.open('', '_blank', 'width=800,height=600,scrollbars=yes,resizable=yes');
-
-            // 2. 팝업이 차단되었는지 확인합니다.
-            if (!printWindow) {
-                alert('팝업이 차단되었습니다. 브라우저 설정에서 팝업을 허용해주세요.');
-                return;
-            }
-
-            // 3. 새 창에 HTML 내용을 씁니다.
-            printWindow.document.open();
-            printWindow.document.write(html);
-            printWindow.document.close();
-
-            // 4. 새 창의 모든 리소스(이미지 등)가 로드될 때까지 기다린 후 인쇄를 실행합니다.
-            printWindow.onload = function() {
-                // onload 이벤트 후에도 브라우저 렌더링을 위해 아주 잠깐의 지연 시간을 줍니다.
-                setTimeout(function () {
-                    printWindow.focus(); // 인쇄할 창에 포커스
-                    printWindow.print(); // 인쇄 대화상자 호출
-                    printWindow.close(); // 인쇄 후 창 닫기
-                }, 200);
-            };
+    if (orig) {
+        html += '<h3>원본</h3><div class="original-content">';
+        if (imageUrl) {
+            html += `<img src="${imageUrl}" alt="원본 이미지" />`;
+        } else {
+            const textContent = type === 'feedback' ? 
+                document.getElementById('contentText-feedback').value : 
+                document.getElementById('contentText-final').value;
+            html += `<div style="white-space: pre-wrap;">${textContent || '내용 없음'}</div>`;
         }
+        html += '</div>';
+    }
+
+    if (fbCheck && type === 'feedback') {
+        const feedbackContent = document.getElementById('fb-content');
+        if (feedbackContent) {
+            html += '<h3>피드백</h3>' + feedbackContent.outerHTML;
+        }
+    }
+
+    if (corr) {
+        const correctedElement = type === 'feedback' ? 
+            document.getElementById('fb-corrected') : 
+            document.getElementById('fn-corrected');
+        
+        if (correctedElement) {
+            html += '<h3>수정글</h3>';
+            html += `<div class="corrected-section">`;
+            html += `<div class="corrected-content">${correctedElement.innerHTML}</div>`;
+            html += '</div>';
+        }
+    }
+
+    html += `
+</body>
+</html>`;
+
+    // iframe 생성 및 인쇄 실행
+    createPrintIframe(html, fileName);
+}
+
+// iframe 생성 및 인쇄 함수
+function createPrintIframe(htmlContent, fileName) {
+    // 기존 iframe이 있다면 제거
+    const existingIframe = document.getElementById('print-iframe');
+    if (existingIframe) {
+        existingIframe.remove();
+    }
+    
+    // 새 iframe 생성
+    const iframe = document.createElement('iframe');
+    iframe.id = 'print-iframe';
+    iframe.style.cssText = `
+        position: fixed;
+        top: -1000px;
+        left: -1000px;
+        width: 210mm;
+        height: 297mm;
+        border: none;
+        z-index: -1;
+    `;
+    
+    // body에 iframe 추가
+    document.body.appendChild(iframe);
+    
+    // iframe 로드 완료 후 인쇄 실행
+    iframe.onload = function() {
+        try {
+            const iframeWindow = iframe.contentWindow;
+            const iframeDocument = iframe.contentDocument;
+            
+            if (!iframeWindow || !iframeDocument) {
+                throw new Error('iframe 접근 불가');
+            }
+            
+            // 인쇄 실행
+            setTimeout(() => {
+                try {
+                    iframeWindow.focus();
+                    iframeWindow.print();
+                    
+                    // 인쇄 완료 후 정리 (약간의 지연 후)
+                    setTimeout(() => {
+                        if (iframe.parentNode) {
+                            iframe.remove();
+                        }
+                    }, 1000);
+                    
+                } catch (printError) {
+                    console.error('인쇄 실행 오류:', printError);
+                    alert('인쇄 실행 중 오류가 발생했습니다. 다시 시도해주세요.');
+                    iframe.remove();
+                }
+            }, 500); // DOM 완전 로드 대기
+            
+        } catch (error) {
+            console.error('iframe 처리 오류:', error);
+            alert('인쇄 준비 중 오류가 발생했습니다.');
+            iframe.remove();
+        }
+    };
+    
+    // iframe 로드 실패 시 처리
+    iframe.onerror = function() {
+        console.error('iframe 로드 실패');
+        alert('인쇄 페이지 로드에 실패했습니다.');
+        iframe.remove();
+    };
+    
+    // HTML 내용을 iframe에 작성
+    try {
+        const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+        iframeDoc.open();
+        iframeDoc.write(htmlContent);
+        iframeDoc.close();
+    } catch (error) {
+        console.error('iframe 내용 작성 오류:', error);
+        alert('인쇄 내용 생성 중 오류가 발생했습니다.');
+        iframe.remove();
+    }
+}
 
 
 
@@ -1552,30 +1777,24 @@
                     document.getElementById('print-options-feedback').style.display = 'flex';
                 });
                 
-                document.getElementById('confirm-print-feedback-btn').addEventListener('click', () => {
-                    const orig = document.getElementById('print_orig_fb').checked;
-                    const fbCheck = document.getElementById('print_fb_fb').checked;
-                    const corr = document.getElementById('print_corr_fb').checked;
-                    const name = document.getElementById('user-name-feedback').value;
-                    const school = document.getElementById('user-school-feedback').value;
-                    
-                    document.getElementById('print-options-feedback').style.display = 'none';
-                    
-                    if (orig && window.feedbackFileURL && window.feedbackFileURL.startsWith('blob:')) {
-                        getRotatedImageForPrint(window.feedbackFileURL, (rotatedImageUrl) => {
-                            generateAndPrintHTML(rotatedImageUrl, orig, fbCheck, corr, name, school, 'feedback');
-                        });
-                    } else {
-                        generateAndPrintHTML(window.feedbackFileURL, orig, fbCheck, corr, name, school, 'feedback');
-                    }
-                });
-            } catch (e) {
-                alert('피드백 요청 중 오류가 발생했습니다.');
-            } finally {
-                btn.disabled = false;
-                document.getElementById('submit-spinner-feedback').style.display = 'none';
-            }
+              // 피드백 인쇄 버튼
+document.getElementById('confirm-print-feedback-btn').addEventListener('click', () => {
+    const orig = document.getElementById('print_orig_fb').checked;
+    const fbCheck = document.getElementById('print_fb_fb').checked;
+    const corr = document.getElementById('print_corr_fb').checked;
+    const name = document.getElementById('user-name-feedback').value;
+    const school = document.getElementById('user-school-feedback').value;
+    
+    document.getElementById('print-options-feedback').style.display = 'none';
+    
+    if (orig && window.feedbackFileURL && window.feedbackFileURL.startsWith('blob:')) {
+        getRotatedImageForPrint(window.feedbackFileURL, (rotatedImageUrl) => {
+            generateAndPrintHTMLWithIframe(rotatedImageUrl, orig, fbCheck, corr, name, school, 'feedback');
         });
+    } else {
+        generateAndPrintHTMLWithIframe(window.feedbackFileURL, orig, fbCheck, corr, name, school, 'feedback');
+    }
+});
 
         // Final submit
         document.getElementById('final-form').addEventListener('submit', async e => {
@@ -1681,30 +1900,68 @@
                     document.getElementById('print-options-final').style.display = 'flex';
                 });
                 
-                document.getElementById('confirm-print-final-btn').addEventListener('click', () => {
-                    const orig = document.getElementById('print_orig_fn').checked;
-                    const corr = document.getElementById('print_corr_fn').checked;
-                    const name = document.getElementById('user-name-final').value;
-                    const school = document.getElementById('user-school-final').value;
-                    
-                    document.getElementById('print-options-final').style.display = 'none';
-                    
-                    if (orig && window.finalFileURL && window.finalFileURL.startsWith('blob:')) {
-                        getRotatedImageForPrint(window.finalFileURL, (rotatedImageUrl) => {
-                            generateAndPrintHTML(rotatedImageUrl, orig, false, corr, name, school, 'final');
-                        });
-                    } else {
-                        generateAndPrintHTML(window.finalFileURL, orig, false, corr, name, school, 'final');
-                    }
-                });
-
-            } catch (e) {
-                alert('최종 결과물 요청 중 오류가 발생했습니다.');
-            } finally {
-                btn.disabled = false;
-                document.getElementById('submit-spinner-final').style.display = 'none';
-            }
+                // 최종 결과 인쇄 버튼
+document.getElementById('confirm-print-final-btn').addEventListener('click', () => {
+    const orig = document.getElementById('print_orig_fn').checked;
+    const corr = document.getElementById('print_corr_fn').checked;
+    const name = document.getElementById('user-name-final').value;
+    const school = document.getElementById('user-school-final').value;
+    
+    document.getElementById('print-options-final').style.display = 'none';
+    
+    if (orig && window.finalFileURL && window.finalFileURL.startsWith('blob:')) {
+        getRotatedImageForPrint(window.finalFileURL, (rotatedImageUrl) => {
+            generateAndPrintHTMLWithIframe(rotatedImageUrl, orig, false, corr, name, school, 'final');
         });
+    } else {
+        generateAndPrintHTMLWithIframe(window.finalFileURL, orig, false, corr, name, school, 'final');
+    }
+});
+        // 인쇄 로딩 표시
+function showPrintLoading() {
+    const loadingDiv = document.createElement('div');
+    loadingDiv.id = 'print-loading';
+    loadingDiv.innerHTML = `
+        <div style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
+                    background: rgba(0,0,0,0.8); color: white; padding: 20px; border-radius: 8px; z-index: 9999;">
+            <div style="text-align: center;">
+                <div style="border: 3px solid #f3f3f3; border-top: 3px solid #3498db; border-radius: 50%; 
+                           width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 0 auto 10px;"></div>
+                인쇄 준비 중...
+            </div>
+        </div>
+        <style>
+            @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        </style>
+    `;
+    document.body.appendChild(loadingDiv);
+}
+
+function hidePrintLoading() {
+    const loadingDiv = document.getElementById('print-loading');
+    if (loadingDiv) {
+        loadingDiv.remove();
+    }
+}
+// iframe 타임아웃 처리
+function createPrintIframeWithTimeout(htmlContent, fileName, timeout = 10000) {
+    showPrintLoading();
+    
+    const timeoutId = setTimeout(() => {
+        hidePrintLoading();
+        alert('인쇄 준비 시간이 초과되었습니다. 다시 시도해주세요.');
+        const iframe = document.getElementById('print-iframe');
+        if (iframe) iframe.remove();
+    }, timeout);
+    
+    // iframe 생성 로직에서 성공 시 타임아웃 클리어
+    iframe.onload = function() {
+        clearTimeout(timeoutId);
+        hidePrintLoading();
+        // ... 기존 로직
+    };
+}
+        
     </script>
 </body>
 
