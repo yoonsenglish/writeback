@@ -22,6 +22,10 @@
             color: #334155;
         }
 
+        body.printing > *:not(#print-frame) {
+       display: none !important;
+        }
+
         #container {
             width: 100%;
             max-width: 768px;
@@ -1333,38 +1337,11 @@
             return html.replace(/<hr[^>]*>$/i, '');
         }
 
-        // 인쇄용 이미지 회전 함수
-        function getRotatedImageForPrint(imageUrl, callback) {
-            const img = new Image();
-            img.crossOrigin = 'anonymous';
-            img.onload = function() {
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-                
-                const isLandscape = img.width > img.height;
-                
-                if (isLandscape) {
-                    canvas.width = img.height;
-                    canvas.height = img.width;
-                    ctx.translate(canvas.width / 2, canvas.height / 2);
-                    ctx.rotate(90 * Math.PI / 180);
-                    ctx.drawImage(img, -img.width / 2, -img.height / 2);
-                } else {
-                    canvas.width = img.width;
-                    canvas.height = img.height;
-                    ctx.drawImage(img, 0, 0);
-                }
-                
-                const rotatedDataUrl = canvas.toDataURL('image/jpeg', 0.9);
-                callback(rotatedDataUrl);
-            };
-            img.src = imageUrl;
-        }
-
-       // 통합 인쇄 HTML 생성 및 인쇄 함수 (수정된 버전)
+      // 통합 인쇄 HTML 생성 및 인쇄 함수 (PDF 저장 문제 해결 버전)
         function generateAndPrintHTML(imageUrl, orig, fbCheck, corr, name, school, type) {
             const fileName = generatePDFFileName(name);
             
+            // --- 기존 HTML 생성 로직은 그대로 유지 ---
             let userInfoHTML = '';
             if (name?.trim() || school?.trim()) {
                 userInfoHTML = `<div class="user-info-print">`;
@@ -1374,7 +1351,6 @@
                 userInfoHTML += `</div>`;
             }
             
-            // 기존과 동일한 HTML 문자열 생성 로직
             let html = `<!doctype html>
 <html>
 <head>
@@ -1409,14 +1385,14 @@
     <div class="print-header"><h1 class="title">윤선생 리얼스피치 2025</h1></div>
     ${userInfoHTML}
     <h2>${type === 'feedback' ? '피드백 결과' : '최종 결과'}</h2>`;
-            
+
             if (orig) {
                 html += '<h3>원본</h3><div class="original-content">';
                 if (imageUrl) {
                     html += `<img src="${imageUrl}" alt="원본 이미지" />`;
                 } else {
-                    const textContent = type === 'feedback' ? 
-                        document.getElementById('contentText-feedback').value : 
+                    const textContent = type === 'feedback' ?
+                        document.getElementById('contentText-feedback').value :
                         document.getElementById('contentText-final').value;
                     html += `<div style="white-space: pre-wrap;">${textContent || '내용 없음'}</div>`;
                 }
@@ -1431,10 +1407,10 @@
             }
 
             if (corr) {
-                const correctedElement = type === 'feedback' ? 
-                    document.getElementById('fb-corrected') : 
+                const correctedElement = type === 'feedback' ?
+                    document.getElementById('fb-corrected') :
                     document.getElementById('fn-corrected');
-                
+
                 if (correctedElement) {
                     html += '<h3>수정글</h3>';
                     html += `<div class="corrected-section">`;
@@ -1444,47 +1420,54 @@
             }
             html += `</body></html>`;
 
+
             // --- 여기가 핵심 수정 부분입니다 ---
 
-            // 1. 이전 인쇄용 iframe이 남아있다면 제거합니다.
             const oldFrame = document.getElementById('print-frame');
             if (oldFrame) {
                 oldFrame.remove();
             }
 
-            // 2. 보이지 않는 iframe을 생성하여 body에 추가합니다.
             const iframe = document.createElement('iframe');
             iframe.id = 'print-frame';
-            iframe.style.display = 'none';
+            iframe.style.display = 'none'; // 초기에는 보이지 않게 설정
             document.body.appendChild(iframe);
 
-            // 3. iframe 내부에 인쇄할 HTML 내용을 씁니다.
             const frameDoc = iframe.contentWindow.document;
             frameDoc.open();
             frameDoc.write(html);
             frameDoc.close();
-            
-            // 4. iframe의 콘텐츠(이미지 포함)가 완전히 로드된 후 인쇄를 실행합니다.
+
+            const doPrint = () => {
+                try {
+                    // 1. body에 printing 클래스를 추가해 다른 요소들을 숨깁니다.
+                    document.body.classList.add('printing');
+                    // 2. 인쇄할 iframe을 화면에 표시합니다. (display: block)
+                    iframe.style.display = 'block';
+
+                    iframe.contentWindow.focus();
+                    iframe.contentWindow.print();
+                } catch (e) {
+                    console.error('인쇄 오류:', e);
+                    alert('인쇄 중 오류가 발생했습니다.');
+                } finally {
+                    // 3. PDF 변환 시간을 고려하여 잠시 후 페이지 상태를 복원합니다.
+                    setTimeout(() => {
+                        document.body.classList.remove('printing');
+                        if (iframe.parentNode) {
+                            iframe.parentNode.removeChild(iframe);
+                        }
+                    }, 2000); // PDF 생성 시간을 위해 2초 대기
+                }
+            };
+
             iframe.onload = function() {
-                // 렌더링을 위한 약간의 지연 시간을 줍니다.
-                setTimeout(function() {
-                    try {
-                        iframe.contentWindow.focus(); // iOS 호환성을 위해 추가
-                        iframe.contentWindow.print();
-                    } catch (e) {
-                        console.error('인쇄 오류:', e);
-                        alert('인쇄 중 오류가 발생했습니다. 다시 시도해주세요.');
-                    } finally {
-                        // 인쇄 대화 상자가 닫힌 후 iframe을 DOM에서 제거합니다.
-                        // 사용자가 인쇄를 취소할 경우를 대비해 약간의 시간차를 두고 제거합니다.
-                         setTimeout(() => {
-                            document.body.removeChild(iframe);
-                        }, 1000);
-                    }
-                }, 500); 
+                setTimeout(doPrint, 500); // iframe 로드 후 0.5초 뒤 실행
             };
         }
 
+
+        
 
         // Feedback submit
         document.getElementById('feedback-form').addEventListener('submit', async e => {
